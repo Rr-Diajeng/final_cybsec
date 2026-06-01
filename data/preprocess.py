@@ -26,8 +26,10 @@ Output:
 import json
 import logging
 import re
+import shutil
 from pathlib import Path
 
+import kagglehub
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -35,7 +37,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger(__name__)
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-RAW_DIR   = Path(__file__).parent / "raw"          # put the CSVs here
+RAW_DIR   = Path(__file__).parent / "raw"          # CSVs are downloaded here
 OUT_DIR   = Path(__file__).parent                  # output JSON goes here
 MAX_TOKENS = 400          # approx. word-level truncation (conservative)
 RANDOM_SEED = 42
@@ -138,7 +140,50 @@ def save_json(records: list[dict], path: Path) -> None:
     log.info(f"Saved {len(records)} records → {path}")
 
 
+def download_dataset() -> None:
+    """
+    Download the Phishing Email Dataset from Kaggle via kagglehub and copy
+    all CSV files into RAW_DIR so the rest of the pipeline can find them.
+
+    Requires either:
+      • A ~/.kaggle/kaggle.json API token, OR
+      • Environment variables KAGGLE_USERNAME and KAGGLE_KEY set.
+
+    Install: pip install kagglehub
+    """
+    log.info("Downloading dataset from Kaggle: naserabdullahalam/phishing-email-dataset …")
+    download_path = kagglehub.dataset_download("naserabdullahalam/phishing-email-dataset")
+    log.info(f"Path to dataset files: {download_path}")
+
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    src = Path(download_path)
+
+    csv_files = list(src.rglob("*.csv"))
+    if not csv_files:
+        raise FileNotFoundError(
+            f"No CSV files found in the downloaded dataset at {download_path}."
+        )
+
+    for csv_file in csv_files:
+        dest = RAW_DIR / csv_file.name
+        if dest.exists():
+            log.info(f"  Already exists, skipping copy: {csv_file.name}")
+        else:
+            shutil.copy2(csv_file, dest)
+            log.info(f"  Copied: {csv_file.name} → {dest}")
+
+    log.info(f"✅ All CSVs ready in {RAW_DIR}")
+
+
 def main():
+    # ── Step 0: Download dataset from Kaggle (skips if CSVs already present) ──
+    existing_csvs = list(RAW_DIR.glob("*.csv")) if RAW_DIR.exists() else []
+    if len(existing_csvs) < 7:
+        log.info("Raw CSV files not found (or incomplete). Downloading from Kaggle …")
+        download_dataset()
+    else:
+        log.info(f"Found {len(existing_csvs)} CSV(s) in {RAW_DIR}, skipping download.")
+
     # ── Dataset catalogue ─────────────────────────────────────────────────────
     datasets = [
         ("phishing_email.csv", "phishing_email"),
