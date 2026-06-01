@@ -1,0 +1,20 @@
+{
+  "phishing_train": {
+    "file_name": "phishing_train.json",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt":   "instruction",
+      "query":    "input",
+      "response": "output"
+    }
+  },
+  "phishing_val": {
+    "file_name": "phishing_val.json",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt":   "instruction",
+      "query":    "input",
+      "response": "output"
+    }
+  }
+}

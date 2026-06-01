@@ -1,0 +1,18 @@
+# guardrails/config/config.yml
+# NeMo Guardrails configuration for the phishing detection pipeline.
+# This layer intercepts email content BEFORE it reaches the LLM.
+
+models:
+  - type: main
+    engine: openai           # NeMo can proxy to any OpenAI-compatible endpoint
+    model:  gpt-3.5-turbo    # used only for intent matching, not classification
+
+# Point to the rails definition file
+rails:
+  input:
+    flows:
+      - check prompt injection
+
+  output:
+    flows:
+      - block injection responses
