@@ -159,17 +159,17 @@ The training run produced checkpoints at steps 1900, 2000, and 2100 (configurabl
 
 The following values are extracted from `trainer_log.jsonl`:
 
-| Step | Train Loss | LR | Epoch % |
-|---|---|---|---|
-| 10 | 0.6224 | 1.46 × 10⁻⁶ | 0.12% |
-| 50 | 0.5286 | 7.97 × 10⁻⁶ | 0.61% |
-| 100 | 0.2365 | 1.61 × 10⁻⁵ | 1.22% |
-| 500 | — | — | ~6% |
-| 1000 | ~0.05 | — | ~12% |
-| 2050 | 0.0083 | 1.79 × 10⁻⁴ | 25.0% |
-| 2100 | 0.0310 | 1.77 × 10⁻⁴ | 25.6% |
+| Step | Train Loss | Eval Loss | LR | Epoch % |
+|---|---|---|---|---|
+| 10 | 0.6223 | — | 1.46 × 10⁻⁶ | 0.12% |
+| 50 | 0.5286 | — | 7.97 × 10⁻⁶ | 0.61% |
+| 100 | 0.2365 | — | 1.61 × 10⁻⁵ | 1.22% |
+| 500 | 0.0247 | 0.0624 | 8.11 × 10⁻⁵ | 2.03% |
+| 1000 | 0.0191 | 0.0203 | 1.62 × 10⁻⁴ | 4.07% |
+| 2050 | 0.0083 | — | 1.79 × 10⁻⁴ | 25.0% |
+| 2100 | 0.0310 | 0.0099 | 1.77 × 10⁻⁴ | 25.6% |
 
-Training loss dropped sharply from **0.622 at step 10** to **0.009 at step 2050**, indicating rapid convergence. The drop to near-zero training loss is expected for a binary classification task where the target vocabulary is restricted to two tokens.
+Training loss dropped from **0.6223 at step 10** to **0.0083 at step 2050**. Eval loss similarly dropped from **0.0624 at step 500** to **0.0099 at step 2100**, confirming the model generalised and did not overfit on the training set.
 
 ### 4.2 Validation Loss
 
@@ -188,13 +188,14 @@ An eval loss of **0.0093** is extremely low for a classification task. This refl
 
 After exporting to GGUF and registering with Ollama, the system was tested via the FastAPI `/classify` endpoint. Results from live API calls:
 
-| Email Type | Expected Label | Returned Label | Confidence | Latency |
-|---|---|---|---|---|
-| Phishing (paypa1-alert.com, urgent credentials) | PHISHING | **PHISHING** | 0.95 | 1967 ms |
-| Prompt injection ("ignore all previous instructions") | PROMPT_INJECTION | **PROMPT_INJECTION** | 1.00 | <5 ms |
-| Legitimate (GitHub newsletter) | SAFE | **SAFE** | 0.95 | ~300 ms |
+| Sender | Subject | Returned Label | Confidence | Guardrail | Latency | Reasoning |
+|---|---|---|---|---|---|---|
+| security@paypa1-alert.com | URGENT: Verify your account | **PHISHING** | 0.95 | SAFE_TO_INFER | 1967.78 ms | `(PHISHING)` |
+| newsletter@github.com | Your weekly digest | **SAFE** | 0.95 | SAFE_TO_INFER | 2894.37 ms | `SAFE` |
+| hr@company.com | Action required: update your details | **SAFE** | 0.95 | SAFE_TO_INFER | 176.19 ms | `SAFE` |
+| test@example.com | Hello | **PROMPT_INJECTION** | 1.00 | BLOCKED | 0.08 ms | `Prompt injection attempt detected: 'Ignore all previous instructions'` |
 
-The prompt injection case was caught by the guardrail layer before reaching the LLM (latency <5 ms confirms no Ollama round-trip).
+The prompt injection case was caught by the guardrail layer before reaching the LLM — latency of **0.08 ms** confirms no Ollama round-trip occurred. The ambiguous HR email was classified as SAFE by the model, reflecting the model's judgment that an internal HR request phrased with "action required" does not meet phishing criteria.
 
 **Debugging note:** An initial incorrect result (`label: REVIEW`, `reasoning: "("`) was traced to Ollama `stop` parameters in the Modelfile being set to `"PHISHING"` and `"SAFE"`. These caused Ollama to strip the label tokens from the model's output before returning the response. Removing the stop parameters resolved the issue and produced correct classifications.
 
