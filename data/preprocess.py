@@ -42,6 +42,8 @@ OUT_DIR   = Path(__file__).parent                  # output JSON goes here
 MAX_TOKENS = 400          # approx. word-level truncation (conservative)
 RANDOM_SEED = 42
 TEST_SIZE   = 0.20
+MAX_TRAIN_SAMPLES = 15_000   # cap for LoRA — more than enough for binary classification
+MAX_VAL_SAMPLES   = 3_000
 # ──────────────────────────────────────────────────────────────────────────────
 
 INSTRUCTION = (
@@ -225,6 +227,18 @@ def main():
         stratify=combined["label_str"],
     )
     log.info(f"Train: {len(train_df)} | Val: {len(val_df)}")
+
+    # ── Cap dataset size (stratified) ─────────────────────────────────────────
+    if len(train_df) > MAX_TRAIN_SAMPLES:
+        train_df = train_df.groupby("label_str", group_keys=False).apply(
+            lambda g: g.sample(frac=MAX_TRAIN_SAMPLES / len(train_df), random_state=RANDOM_SEED)
+        ).sample(frac=1, random_state=RANDOM_SEED)
+        log.info(f"Train capped to {len(train_df)} (stratified)")
+    if len(val_df) > MAX_VAL_SAMPLES:
+        val_df = val_df.groupby("label_str", group_keys=False).apply(
+            lambda g: g.sample(frac=MAX_VAL_SAMPLES / len(val_df), random_state=RANDOM_SEED)
+        ).sample(frac=1, random_state=RANDOM_SEED)
+        log.info(f"Val capped to {len(val_df)} (stratified)")
 
     # ── Convert to alpaca format and save ─────────────────────────────────────
     train_records = [to_alpaca(r) for _, r in train_df.iterrows()]

@@ -113,8 +113,8 @@ git clone https://github.com/hiyouga/LLaMA-Factory.git && cd LLaMA-Factory
 pip install -e ".[torch,metrics,bitsandbytes]"
 
 # Copy the generated JSON files into LLaMA-Factory's data/ directory
-cp ../phishing_system/data/phishing_train.json data/
-cp ../phishing_system/data/phishing_val.json   data/
+cp ../data/phishing_train.json data/
+cp ../data/phishing_val.json   data/
 
 # Register the datasets (merge into existing dataset_info.json)
 # Copy the contents of phishing_system/fine_tuning/dataset_info.json
@@ -128,7 +128,7 @@ huggingface-cli login
 
 ```bash
 # From inside LLaMA-Factory/ with llamafactory-env active:
-llamafactory-cli train ../phishing_system/fine_tuning/qlora_config.yaml
+llamafactory-cli train ../fine_tuning/qlora_config.yaml
 ```
 
 Training checkpoints saved to `saves/llama3-phishing-qlora/`.
@@ -141,7 +141,7 @@ git clone https://github.com/ggerganov/llama.cpp
 pip install -r llama.cpp/requirements.txt
 
 # Run export:
-python phishing_system/fine_tuning/export_to_gguf.py
+python ../fine_tuning/export_to_gguf.py
 ```
 
 This will:

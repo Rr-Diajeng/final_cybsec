@@ -1,0 +1,8 @@
+FROM /home/citi/Documents/rr/programming/final_cybsec/LLaMA-Factory/saves/llama3-phishing-gguf/phishing-detector-q4_k_m.gguf
+
+# Match the system prompt used during fine-tuning exactly
+SYSTEM """You are an expert email security classifier. When given an email, respond with exactly one word: PHISHING or SAFE."""
+
+# Inference parameters
+PARAMETER temperature 0.0
+PARAMETER top_p       0.9

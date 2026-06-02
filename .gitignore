@@ -1,0 +1,39 @@
+# ── Virtual environments ───────────────────────────────────────────────────────
+llamafactory-env/
+.venv/
+venv/
+env/
+
+# ── LLaMA-Factory (third-party clone + large model saves) ─────────────────────
+LLaMA-Factory/
+
+# ── Large model artifacts (store on HF Hub or transfer manually) ──────────────
+# Merged full weights and GGUF live outside git; only LoRA adapter (via LFS)
+# is tracked under model/
+model/**/*.gguf
+
+# ── Raw / generated data ───────────────────────────────────────────────────────
+data/raw/
+
+# ── Node / frontend ────────────────────────────────────────────────────────────
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+
+# ── Python cache ───────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# ── Runtime / database ────────────────────────────────────────────────────────
+inference_api/results.db
+*.db
+*.sqlite
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+.env
+*.env
+.idea/
+.vscode/
